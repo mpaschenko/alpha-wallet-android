@@ -30,7 +30,7 @@
     <string name="no_tokens">Pas de tokens trouvés.</string>
 
     <!-- Titles -->
-    <string name="title_my_adresse">Mon adresse</string>
+    <string name="title_my_address">Mon adresse</string>
     <string name="title_activity_send">Envoyer</string>
     <string name="title_activity_confirmation">Confirmer</string>
     <string name="title_transaction_details">Details de la Transaction</string>
@@ -44,7 +44,7 @@
     <!-- Dialog messages-->
     <string name="toast_message_wallet_imported">Ce portefeuille a été importé</string>
     <string name="toast_message_wallet_exported">Une sauvegarde a été crée</string>
-    <string name="toast_qr_code_no_adresse">Le code QR ne contient pas d\'adresse valide</string>
+    <string name="toast_qr_code_no_address">Le code QR ne contient pas d\'adresse valide</string>
 
     <!-- Labels -->
     <string name="label_from">De</string>
@@ -771,4 +771,5 @@
        <string name="select_dappbrowser_network">Se Connecter au Réseau</string>
     <string name="choose_network_preference">Choisir la Préférence du Réseau</string>
     <string name="please_select_at_least_one_network">Veuillez choisir au moins un réseau.</string>
+    <string name="action_speedup_note">Note that speeding up this transaction does not guarantee your original transaction will be accelerated. If your attempt is successful, you will be charged the miner fee as above.</string>
 </resources>

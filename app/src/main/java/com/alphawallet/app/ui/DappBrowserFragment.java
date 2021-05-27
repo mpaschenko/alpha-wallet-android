@@ -602,6 +602,12 @@ public class DappBrowserFragment extends Fragment implements OnSignTransactionLi
         });
     }
 
+    public void dropFocus()
+    {
+        if (web3 != null) web3.clearFocus();
+        if (urlTv != null) urlTv.clearFocus();
+    }
+
     // TODO: Move all nav stuff to widget
     private void openURLInputView() {
         urlTv.setAdapter(null);
@@ -988,6 +994,7 @@ public class DappBrowserFragment extends Fragment implements OnSignTransactionLi
             confirmationDialog = new ActionSheetDialog(getActivity(), this, this, message);
             confirmationDialog.setCanceledOnTouchOutside(false);
             confirmationDialog.show();
+            confirmationDialog.fullExpand();
         }
     }
 
@@ -1009,6 +1016,7 @@ public class DappBrowserFragment extends Fragment implements OnSignTransactionLi
                 confirmationDialog.setURL(url);
                 confirmationDialog.setCanceledOnTouchOutside(false);
                 confirmationDialog.show();
+                confirmationDialog.fullExpand();
 
                 viewModel.calculateGasEstimate(wallet, Numeric.hexStringToByteArray(transaction.payload),
                         activeNetwork.chainId, transaction.recipient.toString(), new BigDecimal(transaction.value))
@@ -1346,13 +1354,20 @@ public class DappBrowserFragment extends Fragment implements OnSignTransactionLi
 
     public void loadDirect(String urlText)
     {
-        cancelSearchSession();
-        addToBackStack(DAPP_BROWSER);
-        setUrlText(Utils.formatUrl(urlText));
-        web3.loadUrl(Utils.formatUrl(urlText), getWeb3Headers());
-        //ensure focus isn't on the keyboard
-        KeyboardUtils.hideKeyboard(urlTv);
-        web3.requestFocus();
+        if (web3 == null)
+        {
+            if (getActivity() != null) ((HomeActivity)getActivity()).resetFragment(WalletPage.DAPP_BROWSER);
+        }
+        else
+        {
+            cancelSearchSession();
+            addToBackStack(DAPP_BROWSER);
+            setUrlText(Utils.formatUrl(urlText));
+            web3.loadUrl(Utils.formatUrl(urlText), getWeb3Headers());
+            //ensure focus isn't on the keyboard
+            KeyboardUtils.hideKeyboard(urlTv);
+            web3.requestFocus();
+        }
     }
 
     /* Required for CORS requests */

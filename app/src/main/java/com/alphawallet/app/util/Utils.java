@@ -6,11 +6,13 @@ import android.graphics.Typeface;
 import android.text.TextUtils;
 import android.text.format.DateUtils;
 import android.text.style.StyleSpan;
+import android.util.Log;
 import android.util.Patterns;
 import android.util.TypedValue;
 import android.view.View;
 import android.webkit.URLUtil;
 
+import androidx.annotation.RawRes;
 import androidx.core.content.ContextCompat;
 
 import com.alphawallet.app.C;
@@ -504,16 +506,15 @@ public class Utils {
 
     public static boolean isHex(String hexStr)
     {
-        if (hexStr == null) return false;
-        for (Character c : hexStr.toCharArray())
+        if (hexStr == null || hexStr.length() == 0) return false;
+        hexStr = Numeric.cleanHexPrefix(hexStr);
+
+        for (int i = 0; i < hexStr.length(); i++)
         {
-            if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))
-            {
-                return true;
-            }
+            if (Character.digit(hexStr.charAt(i), 16) == -1) { return false; }
         }
 
-        return false;
+        return true;
     }
 
     public static String isolateNumeric(String valueFromInput)
@@ -814,5 +815,20 @@ public class Utils {
         }
 
         return parsed;
+    }
+
+    public static String loadFile(Context context, @RawRes int rawRes) {
+        byte[] buffer = new byte[0];
+        try {
+            InputStream in = context.getResources().openRawResource(rawRes);
+            buffer = new byte[in.available()];
+            int len = in.read(buffer);
+            if (len < 1) {
+                throw new IOException("Nothing is read.");
+            }
+        } catch (Exception ex) {
+            Log.d("READ_JS_TAG", "Ex", ex);
+        }
+        return new String(buffer);
     }
 }

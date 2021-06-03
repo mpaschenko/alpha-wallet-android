@@ -63,6 +63,7 @@ public class GasWidget extends LinearLayout implements Runnable
     private final TextView timeEstimate;
     private final LinearLayout gasWarning;
     private LinearLayout speedWarning;
+    private final TextView speedupNote;
     private final Context context;
 
     private final List<GasSpeed> gasSpeeds;
@@ -82,6 +83,7 @@ public class GasWidget extends LinearLayout implements Runnable
         timeEstimate = findViewById(R.id.text_time_estimate);
         gasWarning = findViewById(R.id.layout_gas_warning);
         speedWarning = findViewById(R.id.layout_speed_warning);
+        speedupNote = findViewById(R.id.text_speedup_note);
 
         gasSpeeds = new ArrayList<>();
 
@@ -168,6 +170,17 @@ public class GasWidget extends LinearLayout implements Runnable
             customSpeedTitle = getContext().getString(R.string.speed_custom);
         }
         return new GasSpeed(customSpeedTitle, expectedTxTime, newGasPrice, true);
+    }
+
+    public void setupResend(boolean cancel)
+    {
+        //If user wishes to cancel transaction, otherwise default is speed it up.
+        if (cancel)
+        {
+            speedupNote.setText(R.string.action_cancel_note);
+        }
+        speedupNote.setVisibility(View.VISIBLE);
+
     }
 
     public void onDestroy()

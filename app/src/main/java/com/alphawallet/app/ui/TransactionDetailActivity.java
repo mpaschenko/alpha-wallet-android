@@ -15,7 +15,6 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.alphawallet.app.C;
 import com.alphawallet.app.R;
-import com.alphawallet.app.entity.ConfirmationType;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
 import com.alphawallet.app.entity.StandardFunctionInterface;
 import com.alphawallet.app.entity.Transaction;
@@ -23,20 +22,17 @@ import com.alphawallet.app.entity.TransactionData;
 import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.tokens.Token;
 import com.alphawallet.app.repository.EthereumNetworkRepository;
-import com.alphawallet.app.service.GasService2;
 import com.alphawallet.app.ui.widget.entity.ActionSheetCallback;
-import com.alphawallet.app.util.BalanceUtils;
 import com.alphawallet.app.util.Utils;
 import com.alphawallet.app.viewmodel.TransactionDetailViewModel;
 import com.alphawallet.app.viewmodel.TransactionDetailViewModelFactory;
-import com.alphawallet.app.web3.entity.Address;
 import com.alphawallet.app.web3.entity.Web3Transaction;
 import com.alphawallet.app.widget.AWalletAlertDialog;
 import com.alphawallet.app.widget.ActionSheetDialog;
 import com.alphawallet.app.widget.ChainName;
 import com.alphawallet.app.widget.CopyTextView;
 import com.alphawallet.app.widget.FunctionButtonBar;
-import com.alphawallet.token.tools.Numeric;
+import com.alphawallet.app.widget.SignTransactionDialog;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -51,7 +47,6 @@ import dagger.android.AndroidInjection;
 import static com.alphawallet.app.C.Key.WALLET;
 import static com.alphawallet.app.ui.widget.holder.TransactionHolder.TRANSACTION_BALANCE_PRECISION;
 import static com.alphawallet.app.widget.AWalletAlertDialog.ERROR;
-import static com.alphawallet.app.widget.AWalletAlertDialog.WARNING;
 import static com.alphawallet.ethereum.EthereumNetworkBase.MAINNET_ID;
 
 public class TransactionDetailActivity extends BaseActivity implements StandardFunctionInterface, ActionSheetCallback
@@ -79,6 +74,9 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
                 .get(TransactionDetailViewModel.class);
         viewModel.latestBlock().observe(this, this::onLatestBlock);
         viewModel.onTransaction().observe(this, this::onTransaction);
+
+        viewModel.transactionFinalised().observe(this, this::txWritten);
+        viewModel.transactionError().observe(this, this::txError);
 
         String txHash = getIntent().getStringExtra(C.EXTRA_TXHASH);
         int chainId = getIntent().getIntExtra(C.EXTRA_CHAIN_ID, MAINNET_ID);
@@ -116,8 +114,6 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
         {
             functionBar.setupSecondaryFunction(this, R.string.action_open_etherscan);
         }
-
-        setupVisibilities();
 
         amount = findViewById(R.id.amount);
         CopyTextView toValue = findViewById(R.id.to);
@@ -191,35 +187,6 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
         }
     }
 
-    private void setupVisibilities()
-    {
-        BigDecimal gasFee = new BigDecimal(transaction.gasUsed).multiply(new BigDecimal(transaction.gasPrice));
-        BigDecimal gasPrice = new BigDecimal(transaction.gasPrice);
-        //any gas fee?
-        if (gasFee.equals(BigDecimal.ZERO))
-        {
-            findViewById(R.id.layout_gas_fee).setVisibility(View.GONE);
-            findViewById(R.id.layout_network_fee).setVisibility(View.GONE);
-        }
-        else
-        {
-            findViewById(R.id.layout_gas_fee).setVisibility(View.VISIBLE);
-            findViewById(R.id.layout_network_fee).setVisibility(View.VISIBLE);
-            ((TextView) findViewById(R.id.gas_used)).setText(BalanceUtils.getScaledValue(new BigDecimal(transaction.gasUsed), 0, 0));
-            ((TextView) findViewById(R.id.network_fee)).setText(BalanceUtils.getScaledValue(BalanceUtils.weiToEth(gasFee), 0, 6));
-            ((TextView) findViewById(R.id.text_fee_unit)).setText(viewModel.getNetworkSymbol(transaction.chainId));
-        }
-
-        if (gasPrice.equals(BigDecimal.ZERO))
-        {
-            findViewById(R.id.layout_gas_price).setVisibility(View.GONE);
-        }
-        else
-        {
-            findViewById(R.id.layout_gas_price).setVisibility(View.VISIBLE);
-            ((TextView) findViewById(R.id.gas_price)).setText(BalanceUtils.weiToGwei(gasPrice, 2));
-        }
-    }
 
     private void setupWalletDetails()
     {
@@ -296,12 +263,14 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
         if (id == R.string.speedup_transaction)
         {
             //resend the transaction to speedup
-            viewModel.reSendTransaction(transaction, this, token, ConfirmationType.RESEND);
+            //viewModel.reSendTransaction(transaction, this, token, ConfirmationType.RESEND);
+            checkConfirm(false);
         }
         else if (id == R.string.cancel_transaction)
         {
             //cancel the transaction
-            viewModel.reSendTransaction(transaction, this, token, ConfirmationType.CANCEL_TX);
+            //viewModel.reSendTransaction(transaction, this, token, ConfirmationType.CANCEL_TX);
+            checkConfirm(true);
         }
         else if (id == R.string.action_open_etherscan)
         {
@@ -313,30 +282,46 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
      * Called to check if we're ready to send user to confirm screen / activity sheet popup
      *
      */
-    private void checkConfirm(final BigInteger sendGasLimit, final byte[] transactionBytes, final String txSendAddress, final String resolvedAddress)
-    {
-        BigInteger ethValue = token.isEthereum() ? new BigInteger(transaction.value) : BigInteger.ZERO;
-        Web3Transaction w3tx = new Web3Transaction(
-                new Address(transaction.to),
-                new Address(token.getAddress()),
-                ethValue,
-                new BigInteger(transaction.gasPrice),
-                sendGasLimit,
-                transaction.nonce,
-                Numeric.toHexString(transactionBytes),
-                -1);
+    private void checkConfirm(boolean isCancelling) {
 
-        if (sendGasLimit.equals(BigInteger.ZERO))
+        Web3Transaction w3tx = new Web3Transaction(transaction, isCancelling);
+
+        if (dialog != null && dialog.isShowing())
         {
-            estimateError(w3tx, transactionBytes, txSendAddress, resolvedAddress);
+            dialog.dismiss();
+        }
+
+        confirmationDialog = new ActionSheetDialog(this, w3tx, token, null,
+                transaction.to, viewModel.getTokenService(), this);
+        confirmationDialog.setupSpeedupTransaction(isCancelling);
+        confirmationDialog.setCanceledOnTouchOutside(false);
+        confirmationDialog.show();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+    {
+        if (requestCode == C.SET_GAS_SETTINGS)
+        {
+            //will either be an index, or if using custom then it will contain a price and limit
+            if (data != null && confirmationDialog != null)
+            {
+                int gasSelectionIndex = data.getIntExtra(C.EXTRA_SINGLE_ITEM, -1);
+                long customNonce = data.getLongExtra(C.EXTRA_NONCE, -1);
+                BigDecimal customGasPrice = data.hasExtra(C.EXTRA_GAS_PRICE) ?
+                        new BigDecimal(data.getStringExtra(C.EXTRA_GAS_PRICE)) : BigDecimal.ZERO; //may not have set a custom gas price
+                BigDecimal customGasLimit = new BigDecimal(data.getStringExtra(C.EXTRA_GAS_LIMIT));
+                long expectedTxTime = data.getLongExtra(C.EXTRA_AMOUNT, 0);
+                confirmationDialog.setCurrentGasIndex(gasSelectionIndex, customGasPrice, customGasLimit, expectedTxTime, customNonce);
+            }
+        }
+        else if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
+        {
+            if (confirmationDialog != null && confirmationDialog.isShowing()) confirmationDialog.completeSignRequest(resultCode == RESULT_OK);
         }
         else
         {
-            if (dialog != null && dialog.isShowing()) dialog.dismiss();
-            confirmationDialog = new ActionSheetDialog(this, w3tx, token, null,
-                    resolvedAddress, viewModel.getTokenService(), this);
-            confirmationDialog.setCanceledOnTouchOutside(false);
-            confirmationDialog.show();
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 
@@ -393,24 +378,4 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
         confirmationDialog.dismiss();
     }
 
-    private void estimateError(final Web3Transaction w3tx, final byte[] transactionBytes, final String txSendAddress, final String resolvedAddress)
-    {
-        if (dialog != null && dialog.isShowing()) dialog.dismiss();
-        dialog = new AWalletAlertDialog(this);
-        dialog.setIcon(WARNING);
-        dialog.setTitle(R.string.confirm_transaction);
-        dialog.setMessage(R.string.error_transaction_may_fail);
-        dialog.setButtonText(R.string.button_ok);
-        dialog.setSecondaryButtonText(R.string.action_cancel);
-        dialog.setButtonListener(v -> {
-            BigInteger gasEstimate = GasService2.getDefaultGasLimit(token, w3tx);
-            checkConfirm(gasEstimate, transactionBytes, txSendAddress, resolvedAddress);
-        });
-
-        dialog.setSecondaryButtonListener(v -> {
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
 }

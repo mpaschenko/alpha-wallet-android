@@ -14,6 +14,7 @@ import com.alphawallet.app.util.StyledStringBuilder;
 import com.alphawallet.app.walletconnect.entity.WCEthereumTransaction;
 import com.alphawallet.token.entity.MagicLinkInfo;
 
+
 import org.web3j.protocol.core.methods.request.Transaction;
 
 import java.math.BigDecimal;
@@ -79,6 +80,19 @@ public class Web3Transaction implements Parcelable {
         this.nonce = Hex.hexToLong(nonce, -1);
         this.payload = wcTx.getData();
         this.leafPosition = callbackId;
+    }
+
+    public Web3Transaction(com.alphawallet.app.entity.Transaction tx, Boolean isCancelling)
+    {
+
+        recipient = new Address(tx.to);
+        contract = new Address (tx.to);
+        value = (isCancelling) ? BigInteger.ZERO: new BigInteger(tx.value);
+        gasPrice = new BigInteger(tx.gasPrice);
+        gasLimit= new BigInteger(tx.gasUsed);
+        nonce = tx.nonce;
+        payload = (isCancelling) ? "0x": tx.hash;
+        leafPosition = -1;
     }
 
     Web3Transaction(Parcel in) {

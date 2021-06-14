@@ -18,6 +18,7 @@ import com.alphawallet.app.entity.NetworkInfo;
 import com.alphawallet.app.entity.SendTransactionInterface;
 import com.alphawallet.app.entity.SignAuthenticationCallback;
 import com.alphawallet.app.entity.Wallet;
+import com.alphawallet.app.entity.WalletConnectActions;
 import com.alphawallet.app.entity.walletconnect.WCRequest;
 import com.alphawallet.app.entity.walletconnect.WalletConnectSessionItem;
 import com.alphawallet.app.interact.CreateTransactionInteract;
@@ -133,6 +134,7 @@ public class WalletConnectViewModel extends BaseViewModel {
         };
 
         Intent i = new Intent(context, WalletConnectService.class);
+        i.setAction(String.valueOf(WalletConnectActions.CONNECT.ordinal()));
         context.startService(i);
         context.bindService(i, serviceConnection, Context.BIND_ABOVE_CLIENT);
 

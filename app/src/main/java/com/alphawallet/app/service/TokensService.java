@@ -26,17 +26,19 @@ import com.alphawallet.app.repository.EthereumNetworkRepositoryType;
 import com.alphawallet.app.repository.PreferenceRepositoryType;
 import com.alphawallet.app.repository.TokenRepositoryType;
 import com.alphawallet.app.repository.TokensRealmSource;
+import com.alphawallet.app.ui.widget.entity.IconItem;
 import com.alphawallet.token.entity.ContractAddress;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -52,9 +54,9 @@ import static com.alphawallet.ethereum.EthereumNetworkBase.RINKEBY_ID;
 
 public class TokensService
 {
+    private static final String TAG = "TOKENSSERVICE";
     public static final String UNKNOWN_CONTRACT = "[Unknown Contract]";
     public static final String EXPIRED_CONTRACT = "[Expired Contract]";
-    private static final long OPENSEA_CHECK_INTERVAL = 30 * DateUtils.SECOND_IN_MILLIS;
     public static final long PENDING_TIME_LIMIT = 3*DateUtils.MINUTE_IN_MILLIS; //cut off pending chain after 3 minutes
 
     private static final Map<String, Float> tokenValueMap = new ConcurrentHashMap<>(); //this is used to compute the USD value of the tokens on an address
@@ -71,9 +73,11 @@ public class TokensService
     private final List<Integer> networkFilter;
     private ContractLocator focusToken;
     private final ConcurrentLinkedDeque<ContractAddress> unknownTokens;
+    private final ConcurrentLinkedQueue<Integer> baseTokenCheck;
     private long nextTokenCheck;
     private boolean openSeaChecked = false;
     private boolean appHasFocus = true;
+    private boolean mainNetActive = true;
 
     @Nullable
     private Disposable eventTimer;
@@ -90,7 +94,6 @@ public class TokensService
 
     public TokensService(EthereumNetworkRepositoryType ethereumNetworkRepository,
                          TokenRepositoryType tokenRepository,
-                         PreferenceRepositoryType preferenceRepository,
                          Context context,
                          TickerService tickerService,
                          OpenseaService openseaService,
@@ -104,8 +107,9 @@ public class TokensService
         networkFilter = new ArrayList<>();
         setupFilter();
         focusToken = null;
-        setCurrentAddress(preferenceRepository.getCurrentWalletAddress()); //set current wallet address at service startup
         this.unknownTokens = new ConcurrentLinkedDeque<>();
+        this.baseTokenCheck = new ConcurrentLinkedQueue<>();
+        setCurrentAddress(ethereumNetworkRepository.getCurrentWalletAddress()); //set current wallet address at service startup
         appHasFocus = true;
     }
 
@@ -212,10 +216,7 @@ public class TokensService
 
     private void storedToken(Token[] tokens)
     {
-        if (tokens.length > 0)
-        {
-            //token is stored
-        }
+
     }
 
     public TokenTicker getTokenTicker(Token token)
@@ -242,15 +243,35 @@ public class TokensService
 
     public void setCurrentAddress(String newWalletAddr)
     {
+        openSeaChecked = false;
         if (newWalletAddr != null && (currentAddress == null || !currentAddress.equalsIgnoreCase(newWalletAddr)))
         {
-            openSeaChecked = false;
             currentAddress = newWalletAddr.toLowerCase();
-            tokenValueMap.clear();
-            pendingChainMap.clear();
-            tokenStoreList.clear();
             stopUpdateCycle();
         }
+    }
+
+    public void startUpdateCycle()
+    {
+        if (currentAddress == null) return;
+        populateTokenCheck();
+
+        nextTokenCheck = System.currentTimeMillis() + 2*DateUtils.SECOND_IN_MILLIS; //delay first checking of Opensea/ERC20 to allow wallet UI to startup
+
+        if (eventTimer != null && !eventTimer.isDisposed())
+        {
+            eventTimer.dispose();
+        }
+
+        if (balanceCheckDisposable != null && !balanceCheckDisposable.isDisposed()) balanceCheckDisposable.dispose();
+        if (erc20CheckDisposable != null && !erc20CheckDisposable.isDisposed()) erc20CheckDisposable.dispose();
+
+        addUnresolvedContracts(ethereumNetworkRepository.getAllKnownContracts(getNetworkFilters()));
+        checkIssueTokens();
+
+        eventTimer = Observable.interval(1, 500, TimeUnit.MILLISECONDS)
+                .doOnNext(l -> checkTokensBalance())
+                .observeOn(Schedulers.newThread()).subscribe();
     }
 
     private void stopUpdateCycle()
@@ -260,6 +281,12 @@ public class TokensService
             eventTimer.dispose();
             eventTimer = null;
         }
+
+        IconItem.resetCheck();
+        tokenValueMap.clear();
+        pendingChainMap.clear();
+        tokenStoreList.clear();
+        baseTokenCheck.clear();
     }
 
     public String getCurrentAddress() { return currentAddress; }
@@ -387,27 +414,6 @@ public class TokensService
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public void startBalanceUpdate()
-    {
-        if (currentAddress == null) return;
-
-        nextTokenCheck = System.currentTimeMillis() + 2*DateUtils.SECOND_IN_MILLIS; //delay first checking of Opensea/ERC20 to allow wallet UI to startup
-
-        if (eventTimer != null && !eventTimer.isDisposed())
-        {
-            eventTimer.dispose();
-        }
-
-        if (balanceCheckDisposable != null && !balanceCheckDisposable.isDisposed()) balanceCheckDisposable.dispose();
-        if (erc20CheckDisposable != null && !erc20CheckDisposable.isDisposed()) erc20CheckDisposable.dispose();
-
-        addUnresolvedContracts(ethereumNetworkRepository.getAllKnownContracts(getNetworkFilters()));
-        checkIssueTokens();
-
-        eventTimer = Observable.interval(1, 500, TimeUnit.MILLISECONDS)
-                    .doOnNext(l -> checkTokensBalance()).subscribe();
-    }
-
     private void checkIssueTokens()
     {
         tokenRepository.fetchTokensThatMayNeedUpdating(currentAddress, networkFilter)
@@ -444,11 +450,11 @@ public class TokensService
 
         if (t != null)
         {
-            if (BuildConfig.DEBUG) Log.d("TOKEN", "Updating: " + t.tokenInfo.chainId + (t.isEthereum() ? " (Base Chain) ":"") + " : " + t.getAddress() + " : " + t.getFullName());
+            if (BuildConfig.DEBUG) Log.d(TAG, "Updating: " + t.tokenInfo.chainId + (t.isEthereum() ? " (Base Chain) ":"") + " : " + t.getAddress() + " : " + t.getFullName());
             balanceCheckDisposable = tokenRepository.updateTokenBalance(currentAddress, t.tokenInfo.chainId, t.getAddress(), t.getInterfaceSpec())
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(balanceChange -> onBalanceChange(balanceChange, t.tokenInfo.chainId), this::onError);
+                    .subscribe(newBalance -> onBalanceChange(newBalance, t), this::onError);
         }
 
         if (System.currentTimeMillis() > nextTokenCheck)
@@ -465,17 +471,28 @@ public class TokensService
         return tokenRepository.fetchChainBalance(walletAddress, chainId);
     }
 
-    private void onBalanceChange(Boolean balanceChange, int chainId)
+    private void onBalanceChange(BigDecimal newBalance, Token t)
     {
+        boolean balanceChange = !newBalance.equals(t.balance);
         // could still be pending transactions so let's keep checking for a short while
-        if (balanceChange && BuildConfig.DEBUG) Log.d("TOKEN", "Change Registered: * " + chainId);
+        if (balanceChange && BuildConfig.DEBUG) Log.d(TAG, "Change Registered: * " + t.getFullName());
+
+        //Switch this token chain on
+        if (t.isEthereum() && !networkFilter.contains(t.tokenInfo.chainId) &&
+                newBalance.compareTo(BigDecimal.ZERO) > 0 && EthereumNetworkRepository.hasRealValue(t.tokenInfo.chainId) == this.mainNetActive)
+        {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Detected balance");
+            //activate this filter
+            networkFilter.add(t.tokenInfo.chainId);
+            //now update the default filters
+            ethereumNetworkRepository.setFilterNetworkList(networkFilter.toArray(new Integer[0]));
+        }
     }
 
     private void checkPendingChains()
     {
         long currentTime = System.currentTimeMillis();
-        Set<Integer> chainIds = pendingChainMap.keySet();
-        for (Integer chainId : chainIds)
+        for (Integer chainId : pendingChainMap.keySet())
         {
             if (currentTime > pendingChainMap.get(chainId))
             {
@@ -498,11 +515,12 @@ public class TokensService
             final Wallet wallet = new Wallet(currentAddress);
 
             if (BuildConfig.DEBUG)
-                Log.d("OPENSEA", "Fetch from opensea : " + currentAddress + " : " + info.getShortName());
+                Log.d(TAG, "Fetch from opensea : " + currentAddress + " : " + info.getShortName());
 
             openseaService.getTokens(currentAddress, info.chainId, info.getShortName(), this)
                     .flatMap(tokens -> tokenRepository.checkInterface(tokens, wallet)) //check the token interface
                     .flatMap(tokens -> tokenRepository.storeTokens(wallet, tokens)) //store fetched tokens
+                    .map(tokens -> tokenRepository.initERC721Assets(wallet, tokens))
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(t -> checkNextOpenseaNetwork(networkId),
@@ -624,7 +642,7 @@ public class TokensService
     public void walletShowing()
     {
         //restart the event cycle
-        startBalanceUpdate();
+        startUpdateCycle();
     }
 
     ///////////////////////////////////////////
@@ -643,7 +661,8 @@ public class TokensService
         //calculate update based on last update time & importance
         float highestWeighting = 0;
         long currentTime = System.currentTimeMillis();
-        Token highestToken = null;
+        Token highestToken = pendingBaseCheck();
+        if (highestToken != null) return highestToken; //initial wallet refresh base token check
 
         //this list will be in order of update.
         for (TokenCardMeta check : tokenList)
@@ -687,6 +706,33 @@ public class TokensService
         }
 
         return highestToken;
+    }
+
+    private Token pendingBaseCheck()
+    {
+        Integer chainId = baseTokenCheck.poll();
+        if (chainId != null)
+        {
+            if (BuildConfig.DEBUG) Log.d(TAG, "Base Token Check: " + ethereumNetworkRepository.getNetworkByChain(chainId).name);
+            return getToken(chainId, currentAddress);
+        }
+        else
+        {
+            return null;
+        }
+    }
+
+    private void populateTokenCheck()
+    {
+        mainNetActive = ethereumNetworkRepository.isMainNetSelected();
+        baseTokenCheck.clear();
+        tokenRepository.createBaseNetworkTokens(currentAddress);
+
+        if (!ethereumNetworkRepository.hasSetNetworkFilters()) //add all networks to a check list to check balances at wallet startup and refresh
+        {
+            NetworkInfo[] networks = ethereumNetworkRepository.getAllActiveNetworks();
+            for (NetworkInfo info : networks) { baseTokenCheck.add(info.chainId); }
+        }
     }
 
     /**
@@ -818,9 +864,9 @@ public class TokensService
         return token;
     }
 
-    public void storeAssets(Token token)
+    public void updateAssets(Token token, List<BigInteger> additions, List<BigInteger> removals)
     {
-        tokenRepository.updateAssets(currentAddress, token);
+        tokenRepository.updateAssets(currentAddress, token, additions, removals);
     }
 
     public void storeAsset(Token token, Asset asset)

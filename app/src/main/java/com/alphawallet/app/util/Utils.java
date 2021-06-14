@@ -392,7 +392,7 @@ public class Utils {
         return address != null && address.length() > 0 && WalletUtils.isValidAddress(address);
     }
 
-    public static String intArrayToString(int[] values)
+    public static String intArrayToString(Integer[] values)
     {
         StringBuilder store = new StringBuilder();
         boolean firstValue = true;
@@ -502,6 +502,18 @@ public class Utils {
         }
 
         return sb.toString();
+    }
+
+    public static boolean isNumeric(String numString)
+    {
+        if (numString == null || numString.length() == 0) return false;
+
+        for (int i = 0; i < numString.length(); i++)
+        {
+            if (Character.digit(numString.charAt(i), 10) == -1) { return false; }
+        }
+
+        return true;
     }
 
     public static boolean isHex(String hexStr)

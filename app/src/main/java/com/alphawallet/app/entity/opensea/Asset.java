@@ -20,6 +20,8 @@ import java.util.Map;
 
 public class Asset implements Parcelable {
 
+    private static final String LOADING_TOKEN = "*Loading*";
+
     @SerializedName("token_id")
     @Expose
     private String tokenId;
@@ -79,7 +81,7 @@ public class Asset implements Parcelable {
     public Asset(BigInteger tokenId)
     {
         this.tokenId = tokenId.toString();
-        this.name = "ID# " + this.tokenId;
+        this.name = getGenericName();
         this.description = null;
         this.imagePreviewUrl = null;
         this.imageOriginalUrl = null;
@@ -99,6 +101,7 @@ public class Asset implements Parcelable {
         {
             if (metaData.has("name")) asset.name = metaData.getString("name");
             if (metaData.has("image")) asset.imageOriginalUrl = Utils.parseIPFS(metaData.getString("image"));
+            else if (metaData.has("image_url")) asset.imageOriginalUrl = Utils.parseIPFS(metaData.getString("image_url"));
             if (metaData.has("description")) asset.description = metaData.getString("description");
             if (metaData.has("external_link")) asset.externalLink = metaData.getString("external_link");
             if (metaData.has("background_color")) asset.backgroundColor = metaData.getString("background_color");
@@ -128,13 +131,13 @@ public class Asset implements Parcelable {
     public static Asset blankLoading(BigInteger tokenId)
     {
         Asset asset = new Asset(tokenId);
-        asset.backgroundColor = "*Loading*";
+        asset.backgroundColor = LOADING_TOKEN;
         return asset;
     }
 
     public boolean needsLoading()
     {
-        return (!TextUtils.isEmpty(backgroundColor) && backgroundColor.equals("*Loading*")
+        return (!TextUtils.isEmpty(backgroundColor) && backgroundColor.equals(LOADING_TOKEN)
                 || TextUtils.isEmpty(imageOriginalUrl));
     }
 
@@ -180,7 +183,7 @@ public class Asset implements Parcelable {
         if (name != null && !name.equals("null")) {
             assetName = name;
         } else {
-            assetName = "ID# " + String.valueOf(tokenId);
+            assetName = getGenericName();
         }
         return assetName;
     }
@@ -330,6 +333,11 @@ public class Asset implements Parcelable {
         return false;
     }
 
+    private String getGenericName()
+    {
+        return "ID# " + tokenId;
+    }
+
     public String getPreviewImageUrl()
     {
         return TextUtils.isEmpty(imagePreviewUrl) ? imageOriginalUrl : imagePreviewUrl;
@@ -350,7 +358,7 @@ public class Asset implements Parcelable {
         Asset oldAsset = oldAssets != null ? oldAssets.get(new BigInteger(tokenId)) : null;
         if (oldAsset != null)
         {
-            if (TextUtils.isEmpty(name) && oldAsset.name != null) name = oldAsset.name;
+            if (TextUtils.isEmpty(name) || name.equals(getGenericName()) && oldAsset.name != null) name = oldAsset.name;
             if (TextUtils.isEmpty(imageOriginalUrl) && oldAsset.imageOriginalUrl != null) imageOriginalUrl = oldAsset.imageOriginalUrl;
             if (TextUtils.isEmpty(imagePreviewUrl) && oldAsset.imagePreviewUrl != null) imagePreviewUrl = oldAsset.imagePreviewUrl;
             if (TextUtils.isEmpty(imageThumbnailUrl) && oldAsset.imageThumbnailUrl != null) imageThumbnailUrl = oldAsset.imageThumbnailUrl;
@@ -367,6 +375,8 @@ public class Asset implements Parcelable {
 
     public boolean requiresReplacement()
     {
-        return (!TextUtils.isEmpty(backgroundColor) && backgroundColor.equals("*Loading*") || TextUtils.isEmpty(name) || TextUtils.isEmpty(imagePreviewUrl));
+        return (!TextUtils.isEmpty(backgroundColor) && backgroundColor.equals(LOADING_TOKEN) ||
+                TextUtils.isEmpty(name) || TextUtils.isEmpty(imagePreviewUrl) ||
+                name.equals(getGenericName()));
     }
 }

@@ -82,7 +82,7 @@ public class Web3Transaction implements Parcelable {
         this.leafPosition = callbackId;
     }
 
-    public Web3Transaction(com.alphawallet.app.entity.Transaction tx, Boolean isCancelling)
+    public Web3Transaction(com.alphawallet.app.entity.Transaction tx, Boolean isCancelling, BigInteger minGas)
     {
 
         recipient = new Address(tx.to);

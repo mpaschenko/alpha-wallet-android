@@ -41,8 +41,6 @@ import com.alphawallet.app.viewmodel.GasSettingsViewModel;
 import com.alphawallet.app.viewmodel.GasSettingsViewModelFactory;
 import com.alphawallet.app.widget.GasSliderView;
 
-import org.w3c.dom.Text;
-
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -80,12 +78,11 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
     private BigInteger customGasPriceFromWidget;
     private GasWarningLayout gasWarning;
     private GasWarningLayout insufficientWarning;
-    private FrameLayout resendNote;
     private ScrollView scroll;
     private final Handler handler = new Handler();
+    private long minGasPrice;
 
     private int customIndex = -1;
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         AndroidInjection.inject(this);
@@ -99,7 +96,6 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
         recyclerView = findViewById(R.id.list);
         gasWarning = findViewById(R.id.gas_warning_bubble);
         insufficientWarning = findViewById(R.id.insufficient_bubble);
-        resendNote = findViewById(R.id.layout_resend_note);
         scroll = findViewById(R.id.setting_scroll);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
@@ -115,7 +111,18 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
         gasSliderView.setNonce(getIntent().getLongExtra(C.EXTRA_NONCE, -1));
         gasSliderView.initGasLimit(customGasLimit.toBigInteger());
         customGasPriceFromWidget = new BigInteger(getIntent().getStringExtra(C.EXTRA_GAS_PRICE));
-        gasSliderView.initGasPrice(customGasPriceFromWidget);
+        minGasPrice = getIntent().getLongExtra(C.EXTRA_MIN_GAS_PRICE, -1);
+        if (minGasPrice != -1)
+        {
+            gasSliderView.setupResendSettings(minGasPrice);
+
+            FrameLayout resendNote = findViewById(R.id.layout_resend_note);
+            resendNote.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            gasSliderView.initGasPrice(customGasPriceFromWidget);
+        }
 
         adapter = new CustomAdapter(this);
         recyclerView.setAdapter(adapter);
@@ -226,17 +233,6 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
         if (customIndex < 0) return;
         updateCustomElement(gasPrice, gasLimit);
         adapter.notifyItemChanged(customIndex);
-    }
-
-    public void setupResend(boolean cancel)
-    {
-        TextView note = findViewById(R.id.text_resend_note);
-        //If user wishes to cancel transaction, otherwise default is speed it up.
-        if (cancel)
-        {
-            note.setText(R.string.text_cancel_gas_note);
-        }
-        resendNote.setVisibility(View.VISIBLE);
     }
 
     public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.CustomViewHolder>

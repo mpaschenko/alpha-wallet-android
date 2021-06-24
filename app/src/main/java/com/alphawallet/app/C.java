@@ -115,12 +115,15 @@ public abstract class C {
     public static final String EXTRA_LOCALE = "LOCALE_STRING";
     public static final String EXTRA_PAGE_TITLE = "PTITLE";
     public static final String EXTRA_CURRENCY = "CURRENCY_STRING";
+    public static final String EXTRA_RESENDING= "RESENDING";
+    public static final String EXTRA_MIN_GAS_PRICE = "MINIMUM_GAS_PRICE";
     public static final String EXTRA_QR_CODE = "QR_SCAN_CODE";
     public static final String EXTRA_UNIVERSAL_SCAN = "UNIVERSAL_SCAN";
     public static final String EXTRA_NONCE = "_NONCE";
     public static final String EXTRA_TXHASH = "_TXHASH";
     public static final String DAPP_URL_LOAD = "DAPP_URL";
     public static final String EXTRA_LOCAL_NETWORK_SELECT_FLAG = "EXTRA_LOCAL_NETWORK_SELECT";
+
 
     public static final String PRUNE_ACTIVITY =
             "com.stormbird.wallet.PRUNE_ACTIVITY";
@@ -176,6 +179,7 @@ public abstract class C {
     public static final String LINKEDIN_PACKAGE_NAME = "com.linkedin.android";
     public static final String REDDIT_PACKAGE_NAME = "com.reddit.frontpage";
     public static final String INSTAGRAM_PACKAGE_NAME = "com.instagram.android";
+
 
     public interface ErrorCode {
         int UNKNOWN = 1;

@@ -38,6 +38,7 @@ import io.realm.Sort;
 import static com.alphawallet.app.C.DEFAULT_GAS_PRICE;
 import static com.alphawallet.app.C.GAS_LIMIT_MIN;
 import static com.alphawallet.ethereum.EthereumNetworkBase.MAINNET_ID;
+import static java.lang.Math.ceil;
 
 /**
  * Created by JB on 19/11/2020.
@@ -63,7 +64,6 @@ public class GasWidget extends LinearLayout implements Runnable
     private final TextView timeEstimate;
     private final LinearLayout gasWarning;
     private LinearLayout speedWarning;
-    private final TextView speedupNote;
     private final Context context;
 
     private final List<GasSpeed> gasSpeeds;
@@ -72,6 +72,7 @@ public class GasWidget extends LinearLayout implements Runnable
     private long customNonce = -1;
     private boolean isSendingAll;
     private boolean forceCustomGas;
+    private float resendGasPrice = -1;
 
     public GasWidget(Context ctx, AttributeSet attrs)
     {
@@ -83,7 +84,6 @@ public class GasWidget extends LinearLayout implements Runnable
         timeEstimate = findViewById(R.id.text_time_estimate);
         gasWarning = findViewById(R.id.layout_gas_warning);
         speedWarning = findViewById(R.id.layout_speed_warning);
-        speedupNote = findViewById(R.id.text_speedup_note);
 
         gasSpeeds = new ArrayList<>();
 
@@ -100,6 +100,8 @@ public class GasWidget extends LinearLayout implements Runnable
             intent.putExtra(C.EXTRA_AMOUNT, transactionValue.toString());
             intent.putExtra(C.EXTRA_GAS_PRICE, gasSpeeds.get(customGasSpeedIndex).gasPrice.toString());
             intent.putExtra(C.EXTRA_NONCE, customNonce);
+            intent.putExtra(C.EXTRA_MIN_GAS_PRICE, resendGasPrice);
+
             baseActivity.startActivityForResult(intent, C.SET_GAS_SETTINGS);
         });
     }
@@ -115,6 +117,7 @@ public class GasWidget extends LinearLayout implements Runnable
         adjustedValue = tx.value;
         isSendingAll = isSendingAll(tx);
         initialGasPrice = tx.gasPrice;
+        customNonce = tx.nonce;
 
         if (tx.gasLimit.equals(BigInteger.ZERO)) //dapp didn't specify a limit, use default limits until node returns an estimate (see setGasEstimate())
         {
@@ -172,12 +175,15 @@ public class GasWidget extends LinearLayout implements Runnable
         return new GasSpeed(customSpeedTitle, expectedTxTime, newGasPrice, true);
     }
 
-    public void setupResend(boolean cancel)
+    public void setupResendSettings(boolean isCancelling, BigInteger minGas)
     {
+        resendGasPrice = minGas.floatValue();
+        TextView speedupNote = findViewById(R.id.text_speedup_note);
+
         //If user wishes to cancel transaction, otherwise default is speed it up.
-        if (cancel)
+        if (isCancelling)
         {
-            speedupNote.setText(R.string.action_cancel_note);
+            speedupNote.setText(R.string.text_cancel_note);
         }
         speedupNote.setVisibility(View.VISIBLE);
 

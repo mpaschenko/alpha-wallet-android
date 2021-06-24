@@ -31,12 +31,14 @@ import com.alphawallet.app.service.AnalyticsServiceType;
 import com.alphawallet.app.service.GasService2;
 import com.alphawallet.app.service.KeyService;
 import com.alphawallet.app.service.TokensService;
+import com.alphawallet.app.util.BalanceUtils;
 import com.alphawallet.app.web3.entity.Web3Transaction;
 import com.alphawallet.token.tools.Numeric;
 
 import org.web3j.protocol.Web3j;
 import org.web3j.protocol.core.methods.response.EthTransaction;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.concurrent.TimeUnit;
 
@@ -289,6 +291,15 @@ public class TransactionDetailViewModel extends BaseViewModel {
                 .resend(defaultWallet.getValue(), nonce, to, value, gasPrice, gasLimit, data, chainId)
                 .subscribe(this::onCreateTransaction,
                         this::onError);
+    }
+
+    public BigInteger calculateMinGasPrice(BigInteger oldGasPrice)
+    {
+
+        BigInteger candidateGasOverridePrice = new BigDecimal(oldGasPrice).multiply(BigDecimal.valueOf(1.1)).toBigInteger();
+        BigInteger checkGasPrice = oldGasPrice.add(BalanceUtils.gweiToWei(BigDecimal.valueOf(2)));
+
+        return checkGasPrice.max(candidateGasOverridePrice); //highest price between adding 2 gwei or 10%
     }
 
 

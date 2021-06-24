@@ -262,14 +262,10 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
     {
         if (id == R.string.speedup_transaction)
         {
-            //resend the transaction to speedup
-            //viewModel.reSendTransaction(transaction, this, token, ConfirmationType.RESEND);
             checkConfirm(false);
         }
         else if (id == R.string.cancel_transaction)
         {
-            //cancel the transaction
-            //viewModel.reSendTransaction(transaction, this, token, ConfirmationType.CANCEL_TX);
             checkConfirm(true);
         }
         else if (id == R.string.action_open_etherscan)
@@ -284,7 +280,7 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
      */
     private void checkConfirm(boolean isCancelling) {
 
-        Web3Transaction w3tx = new Web3Transaction(transaction, isCancelling);
+        Web3Transaction w3tx = new Web3Transaction(transaction, isCancelling, viewModel.calculateMinGasPrice(new BigInteger(transaction.gasPrice)));
 
         if (dialog != null && dialog.isShowing())
         {
@@ -293,7 +289,7 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
 
         confirmationDialog = new ActionSheetDialog(this, w3tx, token, null,
                 transaction.to, viewModel.getTokenService(), this);
-        confirmationDialog.setupSpeedupTransaction(isCancelling);
+        confirmationDialog.setupResendTransaction(isCancelling);
         confirmationDialog.setCanceledOnTouchOutside(false);
         confirmationDialog.show();
     }

@@ -23,6 +23,7 @@ import com.alphawallet.app.entity.Wallet;
 import com.alphawallet.app.entity.tokens.Token;
 import com.alphawallet.app.repository.EthereumNetworkRepository;
 import com.alphawallet.app.ui.widget.entity.ActionSheetCallback;
+import com.alphawallet.app.util.BalanceUtils;
 import com.alphawallet.app.util.Utils;
 import com.alphawallet.app.viewmodel.TransactionDetailViewModel;
 import com.alphawallet.app.viewmodel.TransactionDetailViewModelFactory;
@@ -115,6 +116,8 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
             functionBar.setupSecondaryFunction(this, R.string.action_open_etherscan);
         }
 
+        setupVisibilities();
+
         amount = findViewById(R.id.amount);
         CopyTextView toValue = findViewById(R.id.to);
         CopyTextView fromValue = findViewById(R.id.from);
@@ -187,6 +190,35 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
         }
     }
 
+    private void setupVisibilities()
+    {
+        BigDecimal gasFee = new BigDecimal(transaction.gasUsed).multiply(new BigDecimal(transaction.gasPrice));
+        BigDecimal gasPrice = new BigDecimal(transaction.gasPrice);
+        //any gas fee?
+        if (gasFee.equals(BigDecimal.ZERO))
+        {
+            findViewById(R.id.layout_gas_fee).setVisibility(View.GONE);
+            findViewById(R.id.layout_network_fee).setVisibility(View.GONE);
+        }
+        else
+        {
+            findViewById(R.id.layout_gas_fee).setVisibility(View.VISIBLE);
+            findViewById(R.id.layout_network_fee).setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.gas_used)).setText(BalanceUtils.getScaledValue(new BigDecimal(transaction.gasUsed), 0, 0));
+            ((TextView) findViewById(R.id.network_fee)).setText(BalanceUtils.getScaledValue(BalanceUtils.weiToEth(gasFee), 0, 6));
+            ((TextView) findViewById(R.id.text_fee_unit)).setText(viewModel.getNetworkSymbol(transaction.chainId));
+        }
+
+        if (gasPrice.equals(BigDecimal.ZERO))
+        {
+            findViewById(R.id.layout_gas_price).setVisibility(View.GONE);
+        }
+        else
+        {
+            findViewById(R.id.layout_gas_price).setVisibility(View.VISIBLE);
+            ((TextView) findViewById(R.id.gas_price)).setText(BalanceUtils.weiToGwei(gasPrice, 2));
+        }
+    }
 
     private void setupWalletDetails()
     {
@@ -280,7 +312,9 @@ public class TransactionDetailActivity extends BaseActivity implements StandardF
      */
     private void checkConfirm(boolean isCancelling) {
 
-        Web3Transaction w3tx = new Web3Transaction(transaction, isCancelling, viewModel.calculateMinGasPrice(new BigInteger(transaction.gasPrice)));
+        BigInteger minGasPrice = viewModel.calculateMinGasPrice(new BigInteger(transaction.gasPrice));
+
+        Web3Transaction w3tx = new Web3Transaction(transaction, isCancelling, minGasPrice);
 
         if (dialog != null && dialog.isShowing())
         {

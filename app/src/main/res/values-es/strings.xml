@@ -623,7 +623,7 @@
     <string name="delete">Eliminar</string>
     <string name="refreshing_tokenscripts">Actualizar TokenScripts</string>
     <string name="speedup_transaction">Acelerar</string>
-    <string name="cancel_transaction">Cancelar</string>
+    <string name="cancel_transaction">Cancelar la transacción</string>
     <string name="day_single">1 día</string>
     <string name="day_plural">%s días</string>
     <string name="hour_single">1 hora</string>

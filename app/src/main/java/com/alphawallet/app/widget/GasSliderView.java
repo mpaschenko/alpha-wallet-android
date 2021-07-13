@@ -7,6 +7,7 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -41,7 +42,7 @@ public class GasSliderView extends RelativeLayout
     private float gasLimitScaleFactor;
     private boolean limitInit = false;
     private final Handler handler = new Handler();
-    private boolean isResending = false;
+    private FrameLayout note;
 
     private GasSettingsCallback gasCallback;
 
@@ -55,10 +56,8 @@ public class GasSliderView extends RelativeLayout
         gasLimitValue = findViewById(R.id.gas_limit_entry);
         gasPriceValue = findViewById(R.id.gas_price_entry);
         nonceValue = findViewById(R.id.nonce_entry);
-        if (!isResending)
-        {
-            minimumPrice = BalanceUtils.weiToGweiBI(BigInteger.valueOf(C.GAS_PRICE_MIN)).multiply(BigDecimal.TEN).floatValue();
-        }
+        note = findViewById(R.id.layout_resend_note);
+        minimumPrice = BalanceUtils.weiToGweiBI(BigInteger.valueOf(C.GAS_PRICE_MIN)).multiply(BigDecimal.TEN).floatValue();
         bindViews();
     }
 
@@ -157,18 +156,18 @@ public class GasSliderView extends RelativeLayout
         gasPriceValue.addTextChangedListener(tw);
     }
 
-    public void setupResendSettings(float minPrice)
+    public void setupResendSettings(long minPrice)
     {
-        isResending = true;
+
+        float candidateMinPrice = BalanceUtils.weiToGweiBI(BigInteger.valueOf(minPrice)).multiply(BigDecimal.TEN).floatValue();
+        if (candidateMinPrice > minimumPrice)
+        {
+            minimumPrice = candidateMinPrice;
+            calculateStaticScaleFactor();
+        }
         //nonce must be fixed
         nonceValue.setEnabled(false);
 
-        //recalculate scale factor now that minimum price has changed
-        minimumPrice = minPrice;
-        calculateStaticScaleFactor();
-
-        //show that the speed must be at least 10% more than original gas settings
-        FrameLayout note = findViewById(R.id.layout_resend_note);
         note.setVisibility(View.VISIBLE);
         bindViews();
     }
@@ -272,7 +271,7 @@ public class GasSliderView extends RelativeLayout
 
     public long getNonce()
     {
-        String nonce = nonceValue.getText().toString();
+            String nonce = nonceValue.getText().toString();
         if (!TextUtils.isEmpty(nonce) && TextUtils.isDigitsOnly(nonce))
         {
             return Long.parseLong(nonce);
@@ -291,14 +290,14 @@ public class GasSliderView extends RelativeLayout
         }
 
         //If user intends to resubmit a transaction, do not allow them to change the nonce.
-        if (isResending)
-        {
-            nonceValue.setEnabled(false);
-        }
-        else
-        {
-            nonceValue.setEnabled(true);
-        }
+//        if (isResending)
+//        {
+//            nonceValue.setKeyListener(null);
+//            nonceValue.setFocusable(false);
+//            nonceValue.setEnabled(false);
+//            Log.d("NONCE", "nonce disabled in setNonce");
+//
+//        }
     }
 
     public void reportPosition()

@@ -99,7 +99,7 @@ public class GasWidget extends LinearLayout implements Runnable
             intent.putExtra(C.EXTRA_AMOUNT, transactionValue.toString());
             intent.putExtra(C.EXTRA_GAS_PRICE, gasSpeeds.get(customGasSpeedIndex).gasPrice.toString());
             intent.putExtra(C.EXTRA_NONCE, customNonce);
-            intent.putExtra(C.EXTRA_MIN_GAS_PRICE, resendGasPrice);
+            intent.putExtra(C.EXTRA_MIN_GAS_PRICE, resendGasPrice.longValue());
             baseActivity.startActivityForResult(intent, C.SET_GAS_SETTINGS);
         });
     }
@@ -175,7 +175,7 @@ public class GasWidget extends LinearLayout implements Runnable
 
     public void setupResendSettings(boolean isCancelling, BigInteger minGas)
     {
-        resendGasPrice = initialGasPrice;
+        resendGasPrice = minGas;
         TextView speedupNote = findViewById(R.id.text_speedup_note);
         //If user wishes to cancel transaction, otherwise default is speed it up.
         if (isCancelling)

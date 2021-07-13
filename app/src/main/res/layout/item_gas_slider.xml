@@ -123,7 +123,7 @@
             android:textAlignment="center"
             android:textColor="@color/white"
             android:textSize="@dimen/sp17"
-            tools:text="@string/text_resend_gas_note" />
+            android:text="@string/text_resend_gas_note" />
     </FrameLayout>
 
     <EditText

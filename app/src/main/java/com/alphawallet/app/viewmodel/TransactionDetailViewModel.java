@@ -40,6 +40,7 @@ import org.web3j.protocol.core.methods.response.EthTransaction;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
@@ -296,7 +297,7 @@ public class TransactionDetailViewModel extends BaseViewModel {
     public BigInteger calculateMinGasPrice(BigInteger oldGasPrice)
     {
 
-        BigInteger candidateGasOverridePrice = new BigDecimal(oldGasPrice).multiply(BigDecimal.valueOf(1.1)).toBigInteger();
+        BigInteger candidateGasOverridePrice = new BigDecimal(oldGasPrice).multiply(BigDecimal.valueOf(1.1)).setScale(0, RoundingMode.CEILING).toBigInteger();
         BigInteger checkGasPrice = oldGasPrice.add(BalanceUtils.gweiToWei(BigDecimal.valueOf(2)));
 
         return checkGasPrice.max(candidateGasOverridePrice); //highest price between adding 2 gwei or 10%

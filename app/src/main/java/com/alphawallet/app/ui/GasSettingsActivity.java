@@ -101,7 +101,14 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
 
         viewModel = new ViewModelProvider(this, viewModelFactory)
                 .get(GasSettingsViewModel.class);
+        minGasPrice = getIntent().getLongExtra(C.EXTRA_MIN_GAS_PRICE, -1);
+        if (minGasPrice > 0)
+        {
+            gasSliderView.setupResendSettings(minGasPrice);
 
+            FrameLayout resendNote = findViewById(R.id.layout_resend_note);
+            resendNote.setVisibility(View.VISIBLE);
+        }
         currentGasSpeedIndex = getIntent().getIntExtra(C.EXTRA_SINGLE_ITEM, -1);
         chainId = getIntent().getIntExtra(C.EXTRA_CHAIN_ID, MAINNET_ID);
         customGasLimit = new BigDecimal(getIntent().getStringExtra(C.EXTRA_CUSTOM_GAS_LIMIT));
@@ -111,19 +118,8 @@ public class GasSettingsActivity extends BaseActivity implements GasSettingsCall
         gasSliderView.setNonce(getIntent().getLongExtra(C.EXTRA_NONCE, -1));
         gasSliderView.initGasLimit(customGasLimit.toBigInteger());
         customGasPriceFromWidget = new BigInteger(getIntent().getStringExtra(C.EXTRA_GAS_PRICE));
-        minGasPrice = getIntent().getLongExtra(C.EXTRA_MIN_GAS_PRICE, -1);
-        if (minGasPrice != -1)
-        {
-            gasSliderView.setupResendSettings(minGasPrice);
 
-            FrameLayout resendNote = findViewById(R.id.layout_resend_note);
-            resendNote.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            gasSliderView.initGasPrice(customGasPriceFromWidget);
-        }
-
+        gasSliderView.initGasPrice(customGasPriceFromWidget);
         adapter = new CustomAdapter(this);
         recyclerView.setAdapter(adapter);
         recyclerView.addItemDecoration(new ListDivider(this));

@@ -82,7 +82,7 @@ public class Web3Transaction implements Parcelable {
     }
 
     /**
-     * Initialise from previous Transaction for Resending
+     * Initialise from previous Transaction for Resending (Speeding up or cancelling)
      * @param tx
      * @param isCancelling
      * @param minGas

@@ -7,13 +7,11 @@ import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
-import android.widget.TextView;
 
 import androidx.appcompat.widget.AppCompatSeekBar;
 
@@ -288,16 +286,6 @@ public class GasSliderView extends RelativeLayout
         {
             nonceValue.setText(String.valueOf(nonce));
         }
-
-        //If user intends to resubmit a transaction, do not allow them to change the nonce.
-//        if (isResending)
-//        {
-//            nonceValue.setKeyListener(null);
-//            nonceValue.setFocusable(false);
-//            nonceValue.setEnabled(false);
-//            Log.d("NONCE", "nonce disabled in setNonce");
-//
-//        }
     }
 
     public void reportPosition()

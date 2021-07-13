@@ -14,7 +14,6 @@ import com.alphawallet.app.util.StyledStringBuilder;
 import com.alphawallet.app.walletconnect.entity.WCEthereumTransaction;
 import com.alphawallet.token.entity.MagicLinkInfo;
 
-
 import org.web3j.protocol.core.methods.request.Transaction;
 
 import java.math.BigDecimal;

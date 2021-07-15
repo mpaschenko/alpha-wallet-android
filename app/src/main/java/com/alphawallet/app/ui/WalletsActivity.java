@@ -207,20 +207,7 @@ public class WalletsActivity extends BaseActivity implements
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         initViewModel();
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            Operation taskCode = Operation.values()[requestCode - SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS];
-            if (resultCode == RESULT_OK)
-            {
-                viewModel.completeAuthentication(taskCode);
-            }
-            else
-            {
-                viewModel.failedAuthentication(taskCode);
-            }
-        }
-        else if (requestCode == C.IMPORT_REQUEST_CODE)
+        if (requestCode == C.IMPORT_REQUEST_CODE)
         {
             showToolbar();
             if (resultCode == RESULT_OK) {

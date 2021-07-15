@@ -217,20 +217,7 @@ public class SplashActivity extends BaseActivity implements CreateWalletCallback
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            Operation taskCode = Operation.values()[requestCode - SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS];
-            if (resultCode == RESULT_OK)
-            {
-                splashViewModel.completeAuthentication(taskCode);
-            }
-            else
-            {
-                splashViewModel.failedAuthentication(taskCode);
-            }
-        }
-        else if (requestCode == IMPORT_REQUEST_CODE)
+        if (requestCode == IMPORT_REQUEST_CODE)
         {
             splashViewModel.fetchWallets();
         }

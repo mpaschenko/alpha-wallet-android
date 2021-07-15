@@ -810,10 +810,6 @@ public class ConfirmationActivity extends BaseActivity implements SignAuthentica
                 viewModel.overrideGasSettings(settings);
             }
         }
-        else if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            gotAuthorisation(resultCode == RESULT_OK);
-        }
     }
 
     @Override

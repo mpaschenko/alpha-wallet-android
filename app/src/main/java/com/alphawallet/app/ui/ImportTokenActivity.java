@@ -638,16 +638,6 @@ public class ImportTokenActivity extends BaseActivity implements View.OnClickLis
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode,resultCode,intent);
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            gotAuthorisation(resultCode == RESULT_OK);
-        }
-    }
-
-    @Override
     public void onBackPressed() {
         setResult(RESULT_CANCELED);
         super.onBackPressed();

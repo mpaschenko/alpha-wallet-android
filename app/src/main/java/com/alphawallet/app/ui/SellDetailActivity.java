@@ -545,24 +545,10 @@ public class SellDetailActivity extends BaseActivity implements OnTokenClickList
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS
-                && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SEND_INTENT_REQUEST_CODE)
         {
-            requestCode = SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS;
-        }
-
-        switch (requestCode)
-        {
-            case SEND_INTENT_REQUEST_CODE:
-                sendBroadcast(new Intent(PRUNE_ACTIVITY));
-                break;
-
-            case SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS:
-                gotAuthorisation(resultCode == RESULT_OK);
-                break;
-
-            default:
-                super.onActivityResult(requestCode, resultCode, data);
+            sendBroadcast(new Intent(PRUNE_ACTIVITY));
         }
     }
 

@@ -208,17 +208,6 @@ public class RedeemSignatureDisplayActivity extends BaseActivity implements View
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        signRequest = true;
-        super.onActivityResult(requestCode,resultCode,intent);
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            gotAuthorisation(resultCode == RESULT_OK);
-        }
-    }
-
-    @Override
     public void gotAuthorisation(boolean gotAuth)
     {
         if (gotAuth)

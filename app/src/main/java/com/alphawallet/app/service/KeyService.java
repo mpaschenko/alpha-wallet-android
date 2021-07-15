@@ -125,7 +125,7 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
     private Wallet currentWallet;
 
     private AuthenticationLevel authLevel;
-    private SignTransactionDialog signDialog;
+    private final SignTransactionDialog signDialog;
     private AWalletAlertDialog alertDialog;
     private CreateWalletCallbackInterface callbackInterface;
     private ImportWalletCallback importCallback;
@@ -144,6 +144,7 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         System.loadLibrary("TrustWalletCore");
         context = ctx;
         checkSecurity();
+        signDialog = new SignTransactionDialog(context);
     }
 
     /**
@@ -281,7 +282,11 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         signCallback = callback;
         activity = callingActivity;
         currentWallet = wallet;
-        if (isChecking()) return; //guard against resetting existing dialog request
+        if (signDialog.isShowing())
+        {
+            //error
+            if (BuildConfig.DEBUG) throw new RuntimeException("Should not be showing the authentication dialog");
+        }
 
         switch (wallet.type)
         {
@@ -434,6 +439,10 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         }
     }
 
+    public void resetSigningDialog()
+    {
+        signDialog.close();
+    }
 
     /*********************************
      * Internal Functions
@@ -825,10 +834,7 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
                 break;
         }
 
-        signDialog = new SignTransactionDialog(activity, operation, dialogTitle, null);
-        signDialog.setCanceledOnTouchOutside(false);
-        signDialog.show();
-        signDialog.getFingerprintAuthorisation(this);
+        signDialog.getAuthentication(this, activity, operation);
         requireAuthentication = false;
     }
 
@@ -847,8 +853,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
     @Override
     public void authenticatePass(Operation operation)
     {
-        if (signDialog != null && signDialog.isShowing())
-            signDialog.dismiss();
         //resume key operation
         switch (operation)
         {
@@ -895,8 +899,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         {
             case AUTHENTICATION_DIALOG_CANCELLED: //user dialog cancel
                 cancelAuthentication();
-                if (signDialog != null && signDialog.isShowing())
-                    signDialog.dismiss();
                 break;
             case FINGERPRINT_ERROR_CANCELED:
                 //can be called when swapping between Fingerprint and PIN, may not be a cancel event
@@ -961,11 +963,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
             signCallback.cancelAuthentication();
         else if (callbackInterface != null)
             callbackInterface.cancelAuthentication();
-    }
-
-    public boolean isChecking()
-    {
-        return (signDialog != null && signDialog.isShowing());
     }
 
     private boolean AuthorisationFailMessage(String message)
@@ -1033,8 +1030,8 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
                 case UPGRADE_KEYSTORE_KEY:
                 case UPGRADE_HD_KEY:
                     //dismiss sign dialog & cancel authentication
-                    if (signDialog != null && signDialog.isShowing())
-                        signDialog.dismiss();
+                    /*if (signDialog != null && signDialog.isShowing())
+                        signDialog.dismiss();*/
                     cancelAuthentication();
                     break;
                 default:
@@ -1467,15 +1464,6 @@ public class KeyService implements AuthenticationCallback, PinAuthenticationCall
         }
 
         return false;
-    }
-
-    public void resetSigningDialog()
-    {
-        if (signDialog != null && signDialog.isShowing())
-        {
-            signDialog.dismiss();
-        }
-        signDialog = null;
     }
 
     private boolean deviceIsLocked()

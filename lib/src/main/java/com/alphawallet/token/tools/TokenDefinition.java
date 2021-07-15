@@ -367,7 +367,7 @@ public class TokenDefinition {
         }
         catch (Exception e)
         {
-            e.printStackTrace(); //catch other type of exception not thrown by this function.
+            //e.printStackTrace(); //catch other type of exception not thrown by this function.
             result.parseMessage(ParseResult.ParseResultId.PARSE_FAILED);
         }
     }

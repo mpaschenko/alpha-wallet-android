@@ -566,11 +566,6 @@ public class TransferTicketDetailActivity extends BaseActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            requestCode = SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS;
-        }
-
         switch (requestCode)
         {
             case C.BARCODE_READER_REQUEST_CODE:
@@ -626,10 +621,6 @@ public class TransferTicketDetailActivity extends BaseActivity
                 i.putExtra(C.EXTRA_TXHASH, data.getStringExtra(C.EXTRA_TXHASH));
                 setResult(RESULT_OK, new Intent());
                 finish();
-                break;
-            case SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS:
-                if (actionDialog != null && actionDialog.isShowing()) actionDialog.completeSignRequest(resultCode == RESULT_OK);
-                //signCallback.gotAuthorisation(resultCode == RESULT_OK);
                 break;
 
             default:

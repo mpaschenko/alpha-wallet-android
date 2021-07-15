@@ -371,24 +371,6 @@ public class ImportWalletActivity extends BaseActivity implements OnImportSeedLi
         else importWalletViewModel.onPrivateKey(importPrivateKeyFragment.getPrivateKey(), newPassword, level);
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            Operation taskCode = Operation.values()[requestCode - SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS];
-            if (resultCode == RESULT_OK)
-            {
-                importWalletViewModel.completeAuthentication(taskCode);
-            }
-            else
-            {
-                importWalletViewModel.failedAuthentication(taskCode);
-            }
-        }
-    }
-
     private void handleScanQR(int resultCode, Intent data)
     {
         switch (resultCode)

@@ -1662,18 +1662,6 @@ public class DappBrowserFragment extends Fragment implements OnSignTransactionLi
         }
     }
 
-    /**
-     * Endpoint from PIN/Swipe authorisation
-     * @param gotAuth
-     */
-    public void pinAuthorisation(boolean gotAuth)
-    {
-        if (confirmationDialog != null && confirmationDialog.isShowing())
-        {
-            confirmationDialog.completeSignRequest(gotAuth);
-        }
-    }
-
     @Override
     public void cancelAuthentication()
     {

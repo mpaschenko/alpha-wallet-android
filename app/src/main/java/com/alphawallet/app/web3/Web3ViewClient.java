@@ -1,6 +1,5 @@
 package com.alphawallet.app.web3;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -14,8 +13,6 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-
-import androidx.fragment.app.FragmentActivity;
 
 import com.alphawallet.app.R;
 import com.alphawallet.app.widget.AWalletAlertDialog;

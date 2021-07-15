@@ -980,10 +980,6 @@ public class WalletConnectActivity extends BaseActivity implements ActionSheetCa
     {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            if (confirmationDialog != null && confirmationDialog.isShowing()) confirmationDialog.completeSignRequest(resultCode == RESULT_OK);
-        }
         if (resultCode == RESULT_OK)
         {
             if (requestCode == C.REQUEST_TRANSACTION_CALLBACK)
@@ -1003,7 +999,6 @@ public class WalletConnectActivity extends BaseActivity implements ActionSheetCa
                     confirmationDialog.setCurrentGasIndex(gasSelectionIndex, customGasPrice, customGasLimit, expectedTxTime, customNonce);
                 }
             }
-            else if (signCallback != null) signCallback.gotAuthorisation(true);
         }
         else
         {

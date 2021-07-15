@@ -621,16 +621,6 @@ public class FunctionActivity extends BaseActivity implements FunctionCallback,
         }
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-        super.onActivityResult(requestCode,resultCode,intent);
-
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            gotAuthorisation(resultCode == RESULT_OK);
-        }
-    }
-
     protected void showProgressSpinner(boolean show)
     {
         if (show) handler.post(progress);

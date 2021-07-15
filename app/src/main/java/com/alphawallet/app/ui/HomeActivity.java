@@ -90,7 +90,7 @@ import static com.alphawallet.app.entity.WalletPage.SETTINGS;
 import static com.alphawallet.app.entity.WalletPage.WALLET;
 
 public class HomeActivity extends BaseNavigationActivity implements View.OnClickListener, HomeCommsInterface,
-        FragmentMessenger, Runnable, SignAuthenticationCallback, LifecycleObserver
+        FragmentMessenger, Runnable, LifecycleObserver
 {
     @Inject
     HomeViewModelFactory homeViewModelFactory;
@@ -682,25 +682,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
         }
     }
 
-    @Override
-    public void gotAuthorisation(boolean gotAuth)
-    {
-
-    }
-
-    @Override
-    public void cancelAuthentication()
-    {
-
-    }
-
-    @Override
-    public void createdKey(String keyAddress)
-    {
-        //Key was upgraded
-        //viewModel.upgradeWallet(keyAddress);
-    }
-
     /**
      * On restarting the wallet, all fragments check they have their viewModels
      * If they do not, then the onResume override will call this resetFragment method for that fragment
@@ -1000,13 +981,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data)
     {
-        Operation taskCode = null;
-        if (requestCode >= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS && requestCode <= SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS + 10)
-        {
-            taskCode = Operation.values()[requestCode - SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS];
-            requestCode = SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS;
-        }
-
         switch (requestCode)
         {
             case C.SET_GAS_SETTINGS:
@@ -1030,16 +1004,6 @@ public class HomeActivity extends BaseNavigationActivity implements View.OnClick
                 if (data != null) noLockScreen = data.getBooleanExtra("nolock", false);
                 if (resultCode == RESULT_OK) backupWalletSuccess(keyBackup);
                 else backupWalletFail(keyBackup, noLockScreen);
-                break;
-            case SignTransactionDialog.REQUEST_CODE_CONFIRM_DEVICE_CREDENTIALS:
-                switch (getSelectedItem())
-                {
-                    case DAPP_BROWSER:
-                        ((DappBrowserFragment) dappBrowserFragment).pinAuthorisation(resultCode == RESULT_OK);
-                        break;
-                    default:
-                        break;
-                }
                 break;
             case C.UPDATE_LOCALE:
                 updateLocale(data);

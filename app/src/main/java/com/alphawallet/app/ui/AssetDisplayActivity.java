@@ -27,6 +27,7 @@ import com.alphawallet.app.ui.widget.adapter.NonFungibleTokenAdapter;
 import com.alphawallet.app.viewmodel.TokenFunctionViewModel;
 import com.alphawallet.app.viewmodel.TokenFunctionViewModelFactory;
 import com.alphawallet.app.web3.Web3TokenView;
+import com.alphawallet.app.web3.entity.FunctionCallback;
 import com.alphawallet.app.web3.entity.PageReadyCallback;
 import com.alphawallet.app.widget.AWalletAlertDialog;
 import com.alphawallet.app.widget.ActivityHistoryList;

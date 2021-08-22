@@ -12,9 +12,9 @@ import java.math.BigInteger;
 public class WalletAddEthereumChainObject
 {
     public static class NativeCurrency {
-        String name;
-        String symbol;
-        int decimals;
+        public String name;
+        public String symbol;
+        public int decimals;
     }
 
     public NativeCurrency nativeCurrency;
@@ -23,6 +23,7 @@ public class WalletAddEthereumChainObject
     public String chainType; //ignore this
     public String chainId; //this is a hex number with "0x" prefix. If it is without "0x", process it as dec
     public String[] rpcUrls;
+
 
     public int getChainId()
     {
